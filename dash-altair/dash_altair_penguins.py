@@ -3,10 +3,12 @@ import dash_core_components as dcc
 import dash_html_components as html
 import altair as alt
 import io
-from vega_datasets import data
+import pandas as pd
 
 # load the data
-cars = data.cars()
+penguins = pd.read_csv(
+    "https://raw.githubusercontent.com/MUSA-550-Fall-2020/week-2/master/data/penguins.csv"
+)
 
 # initialize the app
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
@@ -17,11 +19,10 @@ app.title = "Testing Dash and Altair"
 
 # columns to plot
 COLUMNS = [
-    "Miles_per_Gallon",
-    "Acceleration",
-    "Displacement",
-    "Cylinders",
-    "Weight_in_lbs",
+    "flipper_length_mm",
+    "bill_length_mm",
+    "body_mass_g",
+    "bill_depth_mm",
 ]
 
 # set the layout
@@ -36,7 +37,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="x_axis",
                             options=[{"label": i, "value": i} for i in COLUMNS],
-                            value="Acceleration",
+                            value="flipper_length_mm",
                         ),
                     ],
                     style={
@@ -53,7 +54,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="y_axis",
                             options=[{"label": i, "value": i} for i in COLUMNS],
-                            value="Miles_per_Gallon",
+                            value="bill_length_mm",
                         ),
                     ],
                     style={
@@ -64,9 +65,8 @@ app.layout = html.Div(
                     },
                 ),
             ],
-            style={"display": "flex", "justify-content": "center"},
         ),
-        # this is where the chart goes
+        # This is where the chart goes
         html.Iframe(
             id="plot",
             height="500",
@@ -74,7 +74,8 @@ app.layout = html.Div(
             sandbox="allow-scripts",
             style={"border-width": "0px"},
         ),
-    ]
+    ],
+    style={"display": "flex", "justify-content": "center"},
 )
 
 
@@ -88,32 +89,36 @@ app.layout = html.Div(
 def render(x_axis, y_axis):
 
     brush = alt.selection_interval()
-    base = alt.Chart(cars)
+    base = alt.Chart(penguins)
 
     # scatter plot of x vs y
     scatter = (
         base.mark_point()
-        .encode(x=x_axis, y=y_axis, color="Origin:N")
-        .properties(width=250, height=400, selection=brush)
+        .encode(
+            x=alt.X(x_axis, scale=alt.Scale(zero=False)),
+            y=alt.Y(y_axis, scale=alt.Scale(zero=False)),
+            color="species:N",
+        )
+        .properties(width=300, height=400, selection=brush)
     )
 
-    # histogram of horsepower
+    # histogram of body mass
     hist = (
         base.mark_bar()
-        .encode(x=alt.X("Horsepower:Q", bin=True), y="count()", color="Origin:N")
+        .encode(x=alt.X("body_mass_g:Q", bin=True), y="count()", color="species:N")
         .transform_filter(brush.ref())
-    ).properties(height=375)
+    ).properties(width=300, height=400)
 
     # the combined chart
     chart = alt.hconcat(scatter, hist)
 
     # SAVE TO HTML AND THEN RETURN
     # Save html as a StringIO object in memory
-    cars_html = io.StringIO()
-    chart.save(cars_html, "html")
+    chart_html = io.StringIO()
+    chart.save(chart_html, "html")
 
     # Return the html from StringIO object
-    return cars_html.getvalue()
+    return chart_html.getvalue()
 
 
 if __name__ == "__main__":

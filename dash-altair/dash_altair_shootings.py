@@ -3,7 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import altair as alt
 import io
-import carto2gpd
+import requests
 import geopandas as gpd
 import altair as alt
 
@@ -16,34 +16,32 @@ app.title = "Dash: Philadelphia Shootings"
 
 # load the neighborhoods
 hoods = gpd.read_file(
-    "https://raw.githubusercontent.com/MUSA-620-Fall-2019/week-13/master/data/zillow_neighborhoods.geojson"
+    "https://raw.githubusercontent.com/MUSA-550-Fall-2020/week-13/master/data/zillow_neighborhoods.geojson"
 )
 
 
 def get_data(days):
     """
     Query the CARTO database to get shootings from the recent past.
-    
+
     Parameters
     ----------
     days : int
         the number of days to get data for
-    
+
     Returns
     -------
     gdf : GeoDataFrame
         the data frame holding the queried data
     """
-    # Query for the data
-    URL = "https://phl.carto.com/api/v2/sql"
-    WHERE = f"date_ >= current_date - {days}"
-    gdf = carto2gpd.get(URL, "shootings", where=WHERE)
+    query = "SELECT * FROM shootings WHERE date_ >= current_date - %d" % (days)
+    r = requests.get(
+        "https://phl.carto.com/api/v2/sql", params={"q": query, "format": "geojson"}
+    )
+    gdf = gpd.GeoDataFrame.from_features(r.json(), crs={"init": "epsg:4326"})
+    gdf = gdf.dropna()
 
-    # Re-map the fatal column to Yes/No
     gdf["fatal"] = gdf["fatal"].map({0: "No", 1: "Yes"})
-
-    # Remove entries where fatal is NaN
-    gdf = gdf.dropna(subset=["fatal"])
 
     return gdf
 
@@ -89,7 +87,7 @@ def make_altair_chart(data, days):
         .properties(
             width=400,
             height=800,
-            title=f"Shootings in the Last {days} Days by Neighborhood",
+            title="Shootings in the Last %d Days by Neighborhood" % days,
         )
     )
 
@@ -185,7 +183,7 @@ def render(days):
     shootings = len(gdf)
     homicides = (gdf.fatal == "Yes").sum()
     args = (shootings, homicides, days)
-    title = f"There have been {shootings} shootings and {homicides} homicides in the last {days} days."
+    title = "There have been %d shootings and %d homicides in the last %d days." % args
 
     # do a spatial join with ZIP codes
     hoods.crs = gdf.crs
@@ -197,11 +195,11 @@ def render(days):
     chart = make_altair_chart(joined, days)
 
     # Save html as a StringIO object in memory
-    html = io.StringIO()
-    chart.save(html, "html")
+    cars_html = io.StringIO()
+    chart.save(cars_html, "html")
 
     # Return the html from StringIO object
-    return html.getvalue(), title
+    return cars_html.getvalue(), title
 
 
 if __name__ == "__main__":
