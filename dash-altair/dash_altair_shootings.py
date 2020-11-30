@@ -154,6 +154,7 @@ app.layout = html.Div(
             [
                 html.Iframe(
                     id="chart",
+                    srcDoc=None,
                     height="1000",
                     width="1100",
                     sandbox="allow-scripts",

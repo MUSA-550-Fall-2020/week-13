@@ -69,6 +69,7 @@ app.layout = html.Div(
         # This is where the chart goes
         html.Iframe(
             id="plot",
+            srcDoc=None,
             height="500",
             width="1000",
             sandbox="allow-scripts",
