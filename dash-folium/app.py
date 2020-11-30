@@ -18,12 +18,12 @@ app.title = "Dash + Folium: Philadelphia Shootings"
 def get_data(days):
     """
     Query the CARTO database to get shootings from the recent past.
-    
+
     Parameters
     ----------
     days : int
         the number of days to get data for
-    
+
     Returns
     -------
     gdf : GeoDataFrame
@@ -90,6 +90,7 @@ app.layout = html.Div(
             [
                 html.Iframe(
                     id="map",
+                    srcDoc=None,
                     height="500",
                     width="800",
                     sandbox="allow-scripts",
