@@ -1,7 +1,7 @@
 from flask import render_template, request
 from flask import Flask
-import requests
 import geopandas as gpd
+import carto2gpd
 
 app = Flask(__name__)
 
@@ -25,23 +25,19 @@ def hello(days=90, fatal=0):
         % (days, fatal)
     )
 
-    # query the CARTO database
-    r = requests.get(
-        "https://phl.carto.com/api/v2/sql", params={"q": query, "format": "geojson"}
-    )
+    # Query for the data
+    URL = "https://phl.carto.com/api/v2/sql"
+    WHERE = f"date_ >= current_date - {days} AND fatal = {fatal}"
+    gdf = carto2gpd.get(URL, "shootings", where=WHERE)
 
     # count the number of fatal/non-fatal shootings
-    gdf = gpd.GeoDataFrame.from_features(r.json())
     count = (gdf["fatal"] == fatal).sum()
 
     # return the count
     if fatal == 1:
-        return "There have been %d fatal shootings in the past %d days" % (count, days)
+        return f"There have been {count} fatal shootings in the past {days} days"
     else:
-        return "There have been %d nonfatal shootings in the past %d days" % (
-            count,
-            days,
-        )
+        return f"There have been {count} nonfatal shootings in the past {days} days"
 
 
 @app.route("/")
@@ -51,4 +47,3 @@ def hello_world():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-

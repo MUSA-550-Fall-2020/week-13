@@ -24,6 +24,7 @@ COLUMNS = [
     "body_mass_g",
     "bill_depth_mm",
 ]
+LABELS = ["Flipper Length", "Bill Length", "Body Mass", "Bill Depth"]
 
 # set the layout
 app.layout = html.Div(
@@ -36,7 +37,7 @@ app.layout = html.Div(
                         html.Label("x-axis"),
                         dcc.Dropdown(
                             id="x_axis",
-                            options=[{"label": i, "value": i} for i in COLUMNS],
+                            options=[{"label": LABELS[i], "value": col} for i, col in enumerate(COLUMNS)],
                             value="flipper_length_mm",
                         ),
                     ],
@@ -53,7 +54,7 @@ app.layout = html.Div(
                         html.Label("y-axis"),
                         dcc.Dropdown(
                             id="y_axis",
-                            options=[{"label": i, "value": i} for i in COLUMNS],
+                            options=[{"label": LABELS[i], "value": col} for i, col in enumerate(COLUMNS)],
                             value="bill_length_mm",
                         ),
                     ],
@@ -68,7 +69,7 @@ app.layout = html.Div(
         ),
         # This is where the chart goes
         html.Iframe(
-            id="plot",
+            id="plot", # this matches below!
             srcDoc=None,
             height="500",
             width="1000",
@@ -81,10 +82,10 @@ app.layout = html.Div(
 
 
 @app.callback(
-    dash.dependencies.Output("plot", "srcDoc"),
+    dash.dependencies.Output("plot", "srcDoc"), # output
     [
-        dash.dependencies.Input("x_axis", "value"),
-        dash.dependencies.Input("y_axis", "value"),
+        dash.dependencies.Input("x_axis", "value"), # input 1 
+        dash.dependencies.Input("y_axis", "value"), # input 2
     ],
 )
 def render(x_axis, y_axis):
